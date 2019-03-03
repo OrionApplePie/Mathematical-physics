@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import diags
 
-from seidel import (
+from linalg import (
     seidel,
     seidel1,
     norm1,
