@@ -1,3 +1,10 @@
+Для запуска необходимы пакеты numpy, matplotlib, scipy
+проще всего установить стек Anaconda,
+или так: pip install --user numpy scipy matplotlib
+
+
+(Другие лабы будут добавляться по мере написания.)
+
 Lab 1:
     1D FEM implementation
     Seidel method
