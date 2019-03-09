@@ -110,7 +110,7 @@ if __name__ == "__main__":
     plt.plot(x_h, u_k_np, 'r', label='Решатель numpy')
     plt.plot(x_h, u_k, 'g', label="Норма макс")
     plt.plot(x_h, u_k2, 'b-', label='Евклидова норма')
-    plt.plot(x_h, u_k3, 'y-', label="Метод прогонки")
+    plt.plot(x_h, u_k3, 'y--', label="Метод прогонки")
     
     plt.legend()
     plt.show()
