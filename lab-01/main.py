@@ -5,6 +5,7 @@ from scipy.sparse import diags
 from linalg import (
     seidel,
     seidel1,
+    TDMA,
     norm1,
     norm_euclid,
     norm_avg_square
@@ -76,6 +77,11 @@ if __name__ == "__main__":
         norm_euclid
     )
     
+    u_k3 = TDMA(
+        A,
+        b
+    )
+    
     # with angsquare morm
     # u_k3 = seidel(
     #     A,
@@ -87,8 +93,8 @@ if __name__ == "__main__":
 
     u_k_np = insert_boundary_values(u_k_np)
     u_k = insert_boundary_values(u_k) 
-    u_k2 = insert_boundary_values(u_k2)
-    # u_k3 = insert_boundary_values(u_k3)
+    u_k2 = insert_boundary_values(u_k2) 
+    u_k3 = insert_boundary_values(u_k3)
 
     # Setka 0 to 1 по всем узлам
     x_h = np.array(
@@ -104,7 +110,7 @@ if __name__ == "__main__":
     plt.plot(x_h, u_k_np, 'r', label='Решатель numpy')
     plt.plot(x_h, u_k, 'g', label="Норма макс")
     plt.plot(x_h, u_k2, 'b-', label='Евклидова норма')
-    # plt.plot(x_h, u_k3, 'y+')
+    plt.plot(x_h, u_k3, 'y-', label="Метод прогонки")
+    
     plt.legend()
     plt.show()
-    

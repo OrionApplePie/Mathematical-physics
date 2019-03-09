@@ -1,6 +1,9 @@
 import math
 import numpy as np
 
+# TODO: проверить корректность использования массивов np во всех методах
+# например, на вход подается правая чась в виде array[[], [], []],
+# т.е. как двумерный Array, а не одномерный
 
 def gen_three_diag_by_3(elements, n):
     """Генерация трехдиагональной матрицы размером n x n на основе 3 элементов."""
@@ -74,7 +77,8 @@ def seidel(A, f, eps, norm):
     Метод Зейделя.
     A - матрица,
     f -  вектор правой части,
-    eps - заданная точность
+    eps - заданная точность,
+    norm - используемая норма в условии останова.
     """
     m = len(f)    
     x_prev = np.zeros(m)
@@ -106,22 +110,28 @@ def seidel(A, f, eps, norm):
     return x_next
 
 
-def TDMA(a, b, c, f):
-    """Метод прогонки."""
-    a, b, c, f = map(lambda k_list: map(float, k_list), (a, b, c, f))
-
+def TDMA(A, d):
+    """Метод прогонки.
+    d -вектор столбец в формате [[], [], []] !!!"""
     alpha = [0]
     beta = [0]
-    n = len(f)
-    x = [0]*n
-
-    for i in range(n-1):
-        alpha.append(-b[i]/(a[i]*alpha[i] + c[i]))
-        beta.append((f[i] - a[i]*beta[i])/(a[i]*alpha[i] + c[i]))
-
-    x[n-1] = (f[n-1] - a[n-2]*beta[n-1])/(c[n-1] + a[n-2]*alpha[n-1])
-
-    for i in reversed(range(n-1)):
-        x[i] = alpha[i+1]*x[i+1] + beta[i+1]
+    n = len(d)
+    x = [0] * n
+    
+    for i in range(n - 1):
+        a, b, c = A[i, i - 1], A[i, i], A[i, i + 1]
+        alpha.append(
+            -c / (b + a*alpha[i])
+        )
+                
+        beta.append(
+            (d[i][0] - a * beta[i]) / (b + a * alpha[i])
+        )
+    
+    a, b = A[n - 1, n - 2], A[n - 1, n - 1]
+    x[n - 1] = (d[n - 1][0] - a * beta[n - 1]) / (b + a * alpha[n - 1])
+    
+    for i in reversed(range(n - 1)):
+        x[i] = alpha[i + 1] * x[i + 1] +  beta[i + 1]
 
     return x
