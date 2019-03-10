@@ -4,7 +4,6 @@ from scipy.sparse import diags
 
 from linalg import (
     seidel,
-    seidel1,
     TDMA,
     norm1,
     norm_euclid,
@@ -83,19 +82,20 @@ if __name__ == "__main__":
     )
     
     # with angsquare morm
-    # u_k3 = seidel(
-    #     A,
-    #     b,
-    #     eps,
-    #     norm_avg_square
-    # )
+    u_k4 = seidel(
+        A,
+        b,
+        eps,
+        norm_avg_square
+    )
     # print(np.transpose(u_k).tolist())    
 
     u_k_np = insert_boundary_values(u_k_np)
     u_k = insert_boundary_values(u_k) 
     u_k2 = insert_boundary_values(u_k2) 
     u_k3 = insert_boundary_values(u_k3)
-
+    u_k4 = insert_boundary_values(u_k4)
+    
     # Setka 0 to 1 по всем узлам
     x_h = np.array(
         [i*h for i in range(n + 2)]
@@ -111,6 +111,12 @@ if __name__ == "__main__":
     plt.plot(x_h, u_k, 'g', label="Норма макс")
     plt.plot(x_h, u_k2, 'b-', label='Евклидова норма')
     plt.plot(x_h, u_k3, 'y--', label="Метод прогонки")
+    
+    plt.plot(
+        x_h, u_k4,
+        'c--',
+        label="Среднеквадратическая норма"
+    )
     
     plt.legend()
     plt.show()

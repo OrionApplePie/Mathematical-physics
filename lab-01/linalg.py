@@ -44,13 +44,9 @@ def norm_euclid(vec1, vec2):
 def norm_avg_square(vec1, vec2):
     """Среднеквадратическая норма."""
     n = len(vec1)
-
     return math.sqrt(
-        sum(
-            (vec1[i] - vec2[i]) ** 2 for i in range(n)
-        ) / n
+        sum((vec1 - vec2) ** 2) / n
     )
-
 
 
 def seidel1(A, b, eps):
@@ -113,11 +109,16 @@ def seidel(A, f, eps, norm):
 def TDMA(A, d):
     """Метод прогонки.
     d -вектор столбец в формате [[], [], []] !!!"""
+    # списки для прогоночных коэффициентов альфа и бета
     alpha = [0]
     beta = [0]
+    # n - размер матрицы и правой части
     n = len(d)
+    # список для решения
     x = [0] * n
     
+    # прямой ход:
+    # проходимся по строкам матрицы А
     for i in range(n - 1):
         a, b, c = A[i, i - 1], A[i, i], A[i, i + 1]
         alpha.append(
@@ -127,10 +128,12 @@ def TDMA(A, d):
         beta.append(
             (d[i][0] - a * beta[i]) / (b + a * alpha[i])
         )
-    
+    # вычисление последнего компонента решения (xm - см. теорию)
+    # n-1го т.к. нумерация в массивах numpy идет с 0
     a, b = A[n - 1, n - 2], A[n - 1, n - 1]
-    x[n - 1] = (d[n - 1][0] - a * beta[n - 1]) / (b + a * alpha[n - 1])
+    x[n - 1] = ( d[n - 1][0] - a * beta[n - 1] ) / ( b + a * alpha[n - 1] )
     
+    # прямой ход
     for i in reversed(range(n - 1)):
         x[i] = alpha[i + 1] * x[i + 1] +  beta[i + 1]
 
