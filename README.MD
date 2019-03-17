@@ -1,7 +1,12 @@
 Репозиторий для лабораторных работ по предмету "Численное моделирование в математических пакетах".
 
 Для запуска необходимы пакеты numpy, matplotlib, scipy.
-Проще всего установить стек Anaconda, или установить нужные пакеты так: pip install --user numpy scipy matplotlib
+Проще всего установить стек Anaconda,
+или установить нужные пакеты так:
+
+```
+pip install --user numpy scipy matplotlib
+```
 
 В папке res находятся ресурсы с теорией: книги и пр. а также ссылки. 
 
@@ -10,4 +15,3 @@
 Lab 1. 1D FEM - Одномерная задача:
     Seidel method
     Tridiagonal matrix algorithm (TDMA)
-
