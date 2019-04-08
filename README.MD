@@ -12,6 +12,7 @@ pip install --user numpy scipy matplotlib
 
 (лабы будут добавляться по мере написания.)
 
+---
 
 # Лабораторная работа №1. Одномерная задача.
 
@@ -21,7 +22,46 @@ pip install --user numpy scipy matplotlib
 - Метод прогонки (Tridiagonal matrix algorithm - TDMA)
 
 
+---
+
+
 # Лабораторная работа №2. Решение задачи Дирихле в двумерном случае методом конечных элементов, область - единичный квадрат.
 
 Реализован обход области по узла и сборка глобальной матрицы жёсткости.
 Т.к. область квадратная - то реализация тривиальная.
+
+---
+
+## Как запустить в Windows
+
+1. Установить интерпретатор [Python 3](https://www.python.org/) с добавлением в переменную [Path](https://python-scripts.com/install-python)
+
+2. Проверить, запускается ли Python из командной строки, набрав в ней:
+    ```
+    python
+    ````
+    должена отобразиться версия Python и интерактивный режим
+
+3. Для удобства последуюбщей работы можно установить эмулятор консоли, например [Cmdr](https://cmder.net/) и желательно версию с  Git for Windows.
+
+5. Установить virtualenv и virtualenvwrapper-win (инструкция [здесь](http://itman.in/python-windows-virtualenv/), или [здесь](https://tutorial.djangogirls.org/ru/django_installation/) или [здесь](https://www.youtube.com/watch?v=wTh-D8GTjeA)).
+
+6. Склонировать проект. Для этого в терминале перейти в папку отведенную для хранения проектов и выполнить: 
+    ```
+    git clone https://github.com/OrionApplePie/Mathematical-physics.git
+    ```
+
+7. Создать виртуальное окружения для этого проекта
+    ```
+    mkvirtualenv -a Mathematical-physics math-phys
+    ```
+    где math-phys - имя для виртуального окружения.
+
+8. Установить зависимости:
+    ```
+    pip install -r requirements.txt
+    ```
+9. Запустить main.py:
+    ```
+    python main.py
+    ```

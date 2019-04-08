@@ -1,5 +1,2 @@
-flake8==3.7.7
-matplotlib==3.0.3
-numpy==1.16.2
-pylint==2.3.1
-scipy==1.2.1
+matplotlib
+numpy
