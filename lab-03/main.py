@@ -13,7 +13,8 @@ from linalg import (
 
 
 EPS = 1E-5  # точность для м. Зейделя
-NODES = 22  # количество узлов по стороне, 99 узлов считает очень долго
+NODES = 10  # количество узлов по стороне, 99 узлов считает очень долго
+NN = NODES * NODES
 h = 1.0 / NODES  
 # константа маппер со значениями элементов м. жесткости (интегралы)
 VALS = {
@@ -28,9 +29,33 @@ VALS = {
     'right_up': h**2 / 12.0,
     'left_down': h**2 / 12.0,
 
-    'none': 0.0
+    'none': 0.0,
+
+    'bound_self': 2.0 + h**2 / 4.0,
+    'bound_two': h**2 /12,
+    'bound_self_angle_r_two': 1.0 + h**2 / 6.0,
+    'bound_self_angle_l_one': 1.0 + h**2 / 12.0
 }
 
+vals_f = {
+    'bound_self': h ** 4,
+    'bound_two': h ** 2 / 2,
+    'bound_self_angle_r_two': h**2 / 3.0,
+    'bound_self_angle_l_one': h**2 / 6.0,
+
+    'self': None,
+
+    'up': None,
+    'down': None,
+
+    'right': None,
+    'left': None,
+
+    'right_up': None,
+    'left_down': None,
+
+    'none': None,
+}
 
 def get_type_of_pair(node1, node2):
     """Функция вычисляет 'тип соседства' 2х узлов.
@@ -61,11 +86,20 @@ def get_type_of_pair(node1, node2):
     else:
         res = 'none'
     
-    if i1 == i2 == 0 or i1 == i2 == NODES:
-        res = 'bound'
-    
-    if j1 == j2 == 0 or j1 == j2 == NODES:
-        res = 'bound'
+    # for nodes on bound
+    if i1 == i2 == 1 or i1 == i2 == NODES or j1 == j2 == 1 or j1 == j2 == NODES:
+        if ii == 0 and jj == 0:
+            res = 'bound_self'
+            print('foo')
+        if abs(ii) == 1 or abs(jj) == 1:
+            res = 'bound_two'
+            print('foo')
+        if i1 == i2 == j1 == j2 == 1 or i1 == i2 == j1 == j2 == NODES:
+            res = 'bound_self_angle_r_two'
+            print('foo')
+        if (i1 == i2 == 1 and j1 == j2 == NODES) or (i1 == i2 == NODES and j1 == j2 == 1):
+            res = 'bound_self_angle_l_one'
+            print('foo')
 
     return res
 
@@ -85,26 +119,31 @@ if __name__ == "__main__":
             )
             node_num_count += 1
     # матрица жесткости
-    matrix = np.zeros((NODES*NODES, NODES*NODES))
+    
+    
+    # правая часть
+    f = np.array(
+        [h ** 2]*NN
+    )
+
+    matrix = np.zeros((NN, NN))
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать симметричность матрицы
     for node1, node2 in itertools.product(nodes_list, repeat=2):
         pair_type = VALS[get_type_of_pair(node1, node2)]
+        if vals_f[get_type_of_pair(node1, node2)]:
+            f[node1['node'] - 1] = vals_f[get_type_of_pair(node1, node2)]
         matrix[node1['node'] - 1][node2['node'] - 1] = pair_type
 
-    # правая часть
-    f = np.array(
-        [h ** 2]*(NODES*NODES)
-    )
     # решение слау встроенным решателем
-    # sol = np.linalg.solve(matrix, f)
+    sol = np.linalg.solve(matrix, f)
     # решение слау методом Зейделя
-    sol = seidel(
-        matrix,
-        f,
-        EPS,
-        norm_avg_square
-    )
+    # sol = seidel(
+    #     matrix,
+    #     f,
+    #     EPS,
+    #     norm_avg_square
+    # )
 
     # из вектора решения делаем двумерный вектор
     # размером NODES на NODES
