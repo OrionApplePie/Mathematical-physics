@@ -8,14 +8,15 @@ from matplotlib.ticker import FormatStrFormatter
 
 from linalg import (
     seidel,
-    norm_avg_square
+    norm_euclid
 )
 
 
 EPS = 1E-5  # точность для м. Зейделя
-NODES = 10  # количество узлов по стороне, 99 узлов считает очень долго
+NODES = 12  # количество узлов по стороне, 99 узлов считает очень долго
 NN = NODES * NODES
-h = 1.0 / NODES  
+h = 1.0 / NODES
+
 # константа маппер со значениями элементов м. жесткости (интегралы)
 VALS = {
     'self': 4.0 + h**2 / 2.0,
@@ -32,30 +33,36 @@ VALS = {
     'none': 0.0,
 
     'bound_self': 2.0 + h**2 / 4.0,
-    'bound_two': h**2 /12,
     'bound_self_angle_r_two': 1.0 + h**2 / 6.0,
-    'bound_self_angle_l_one': 1.0 + h**2 / 12.0
+    'bound_self_angle_l_one': 1.0 + h**2 / 12.0,
+
+    'bound_pair_vert_or_horz': h**2 / 24.0 - 0.5,
 }
 
 vals_f = {
-    'bound_self': h ** 4,
-    'bound_two': h ** 2 / 2,
+    'bound_pair_vert_or_horz': h**2 / 2.0,
     'bound_self_angle_r_two': h**2 / 3.0,
     'bound_self_angle_l_one': h**2 / 6.0,
 
-    'self': None,
-
-    'up': None,
-    'down': None,
-
-    'right': None,
-    'left': None,
-
-    'right_up': None,
-    'left_down': None,
-
-    'none': None,
+    'inner': h**2
 }
+
+
+def get_type_of_node(node):
+    """"""
+    i = node['i']
+    j = node['j']
+    res = ''
+    if (1 < i < NODES) and (1 < j < NODES):
+        res = 'inner'
+    elif (i == 1 and j == 1) or (i == NODES and j == NODES):
+        res = 'bound_self_angle_r_two'
+    elif (i == 1 and j == NODES) or (i == NODES and j == 1):
+        res = 'bound_self_angle_l_one'
+    else:
+        res = 'bound_pair_vert_or_horz'
+    return res
+
 
 def get_type_of_pair(node1, node2):
     """Функция вычисляет 'тип соседства' 2х узлов.
@@ -85,33 +92,33 @@ def get_type_of_pair(node1, node2):
         res = 'left'
     else:
         res = 'none'
-    
+
     # for nodes on bound
-    if i1 == i2 == 1 or i1 == i2 == NODES or j1 == j2 == 1 or j1 == j2 == NODES:
+    if (
+        i1 == i2 == 1 or
+        i1 == i2 == NODES or
+        j1 == j2 == 1 or
+        j1 == j2 == NODES
+    ):
         if ii == 0 and jj == 0:
             res = 'bound_self'
-            print('foo')
         if abs(ii) == 1 or abs(jj) == 1:
-            res = 'bound_two'
-            print('foo')
+            res = 'bound_pair_vert_or_horz'
         if i1 == i2 == j1 == j2 == 1 or i1 == i2 == j1 == j2 == NODES:
             res = 'bound_self_angle_r_two'
-            print('foo')
         if (i1 == i2 == 1 and j1 == j2 == NODES) or (i1 == i2 == NODES and j1 == j2 == 1):
             res = 'bound_self_angle_l_one'
-            print('foo')
-
     return res
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     node_num_count = 1
     nodes_list = []
     #  обходим все узлы и сохраняем в список вместе с координатами.
     for row_num in range(1, NODES + 1):
         for col_num in range(1, NODES + 1):
             nodes_list.append(
-                { 
+                {
                     'node': node_num_count,
                     'i': col_num,
                     'j': row_num
@@ -119,38 +126,51 @@ if __name__ == "__main__":
             )
             node_num_count += 1
     # матрица жесткости
-    
-    
+
     # правая часть
     f = np.array(
-        [h ** 2]*NN
+        [0.0]*NN
     )
 
     matrix = np.zeros((NN, NN))
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать симметричность матрицы
     for node1, node2 in itertools.product(nodes_list, repeat=2):
-        pair_type = VALS[get_type_of_pair(node1, node2)]
-        if vals_f[get_type_of_pair(node1, node2)]:
-            f[node1['node'] - 1] = vals_f[get_type_of_pair(node1, node2)]
-        matrix[node1['node'] - 1][node2['node'] - 1] = pair_type
 
+        a_ki = VALS[
+            get_type_of_pair(node1, node2)
+        ]
+        # print("node1 {} --> node2 {} --> {} = {}, {} --> f = {}".format(
+        #     node1['node'],
+        #     node2['node'],
+        #     get_type_of_pair(node1, node2),
+        #     a_ki,
+        #     get_type_of_node(node1),
+        #     vals_f[get_type_of_node(node1)]
+        # ))
+        f[node1['node'] - 1] = vals_f[get_type_of_node(node1)]
+
+        matrix[node1['node'] - 1][node2['node'] - 1] = a_ki
+    print(f)
+    print(vals_f)
     # решение слау встроенным решателем
-    sol = np.linalg.solve(matrix, f)
+    # sol = np.linalg.solve(matrix, f)
     # решение слау методом Зейделя
-    # sol = seidel(
-    #     matrix,
-    #     f,
-    #     EPS,
-    #     norm_avg_square
-    # )
+    sol = seidel(
+        matrix,
+        f,
+        EPS,
+        norm_euclid
+    )
+    sol = np.around(sol, decimals=3)
 
+    print(sol)
     # из вектора решения делаем двумерный вектор
     # размером NODES на NODES
     Z = np.reshape(sol, (NODES, NODES))
     # создание сетки
-    X = np.arange(0, 1, h)
-    Y = np.arange(0, 1, h)
+    X = np.arange(0.0, 1.0, h)
+    Y = np.arange(0.0, 1.0, h)
     X, Y = np.meshgrid(X, Y)
 
     # график поверхности 3d
@@ -159,17 +179,17 @@ if __name__ == "__main__":
     surf = ax.plot_surface(
         X, Y, Z,
         cmap=cm.coolwarm,
-        linewidth=0,
+        linewidth=1,
         antialiased=True
     )
-    
-    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-    
+
+    # ax.zaxis.set_major_formatter(FormatStrFormatter('%.0001f'))
+
     # шкала - бар
-    fig.colorbar(
-        mappable=surf,
-        shrink=0.5,
-        aspect=5
-    )
+    # fig.colorbar(
+    #     mappable=surf,
+    #     shrink=0.5,
+    #     aspect=5
+    # )
 
     plt.show()
