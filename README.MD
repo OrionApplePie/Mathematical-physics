@@ -1,12 +1,12 @@
-Репозиторий для лабораторных работ по предмету "Численное моделирование в математических пакетах".
+# Репозиторий для лабораторных работ и РГР по предметам "Численное моделирование в математических пакетах" и пр.
 
 Для запуска необходимы пакеты numpy, matplotlib, scipy.
-В Windows проще всего установить стек Anaconda,
-или установить нужные пакеты так:
+установить нужные пакеты так:
 
 ```
 pip install --user numpy scipy matplotlib
 ```
+В Windows проще всего установить стек Anaconda.
 
 В папке __res__ находятся ресурсы с теорией: книги и пр. а также ссылки. 
 
@@ -32,7 +32,14 @@ pip install --user numpy scipy matplotlib
 
 ---
 
-## Как запустить в Windows
+...
+
+# РГР "Плоская задача теории упругости" (2 курс, 3 семестр)
+
+Собственно, плоская задача теории упругости, область -- квадрат.
+
+
+# Как запустить в Windows
 
 1. Установить интерпретатор [Python 3](https://www.python.org/) с добавлением в переменную [Path](https://python-scripts.com/install-python)
 
@@ -40,9 +47,9 @@ pip install --user numpy scipy matplotlib
     ```
     python
     ````
-    должена отобразиться версия Python и интерактивный режим
+    должен запуститься интерактивный режим Python (там же отобразиться версия Python)
 
-3. Для удобства последуюбщей работы можно установить эмулятор консоли, например [Cmdr](https://cmder.net/) и желательно версию с  Git for Windows.
+3. Для удобства работы можно установить эмулятор терминала -- [Cmdr](https://cmder.net/), версию с Git for Windows.
 
 5. Установить virtualenv и virtualenvwrapper-win (инструкция [здесь](http://itman.in/python-windows-virtualenv/), или [здесь](https://tutorial.djangogirls.org/ru/django_installation/) или [здесь](https://www.youtube.com/watch?v=wTh-D8GTjeA)).
 
@@ -51,7 +58,9 @@ pip install --user numpy scipy matplotlib
     git clone https://github.com/OrionApplePie/Mathematical-physics.git
     ```
 
-7. Создать виртуальное окружения для этого проекта
+7. Создать виртуальное окружения для этого проекта.
+Для этого перейти в каталог содержащий репозиторий и выполнить
+
     ```
     mkvirtualenv -a Mathematical-physics math-phys
     ```
@@ -61,7 +70,8 @@ pip install --user numpy scipy matplotlib
     ```
     pip install -r requirements.txt
     ```
-9. Запустить main.py:
+9. Прейти в нужную папку с лабораторной/РГР и запустить main.py:
+
     ```
     python main.py
     ```
