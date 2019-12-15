@@ -64,6 +64,105 @@ vals_dx1_dx1 = {
     'none': 0.0,  # если узлы не имеют общийх областей
 }
 
+# dphi_ik/dx2 * dphi_i/dx1
+vals_dx2_dx1 = {
+    # внутренние (неграничные) пары узлов 
+    'self_inner': -1,
+
+    'up': 0.5,
+    'down': 0.5,
+
+    'left': 0.5,
+    'right': 0.5,
+
+    'right_up': -0.5,
+    'left_down': -0.5,
+
+    # узел сам с собой на границе
+    'bound_self_triangle_one': -0.5,  # и верхний и нижний - интегралы одинаковые
+    'bound_self_triangle_two': 0.0,
+
+    'bound_self_vert_left': -0.5,
+    'bound_self_vert_right': -0.5,
+
+    'bound_self_horz_up': -0.5,
+    'bound_self_horz_down': -0.5,
+
+    # пары узлов на границе
+    'bound_pair_horz_up': 0.5,
+    'bound_pair_horz_down': 0,
+    'bound_pair_vert_left': 0,
+    'bound_pair_vert_right': 0.5,
+
+    'none': 0.0,  # если узлы не имеют общийх областей
+}
+
+# dphi_ik/dx2 * dphi_i/dx1
+vals_dx2_dx2 = {
+    # внутренние (неграничные) пары узлов 
+    'self_inner': 2,
+
+    'up': -1,
+    'down': -1,
+
+    'left': 0.5,
+    'right': 0.0,
+
+    'right_up': 0.0,
+    'left_down': 0.0,
+
+    # узел сам с собой на границе
+    'bound_self_triangle_one': 0.5,  # и верхний и нижний - интегралы одинаковые
+    'bound_self_triangle_two': 0.5,
+
+    'bound_self_vert_left': 1,
+    'bound_self_vert_right': 1,
+
+    'bound_self_horz_up': 1,
+    'bound_self_horz_down': 1,
+
+    # пары узлов на границе
+    'bound_pair_horz_up': 0.0,
+    'bound_pair_horz_down': 0.0,
+    'bound_pair_vert_left': -0.5,
+    'bound_pair_vert_right': -0.5,
+
+    'none': 0.0,  # если узлы не имеют общийх областей
+}
+
+# dphi_ik/dx2 * dphi_i/dx1
+vals_dx1_dx2 = {
+    # внутренние (неграничные) пары узлов 
+    'self_inner': -1,
+
+    'up': 0.5,
+    'down': 0.5,
+
+    'left': 0.5,
+    'right': 0.5,
+
+    'right_up': -0.5,
+    'left_down': -0.5,
+
+    # узел сам с собой на границе
+    'bound_self_triangle_one': -0.5,  # и верхний и нижний - интегралы одинаковые
+    'bound_self_triangle_two': 0.0,
+
+    'bound_self_vert_left': -0.5,
+    'bound_self_vert_right': -0.5,
+
+    'bound_self_horz_up': -0.5,
+    'bound_self_horz_down': -0.5,
+
+    # пары узлов на границе
+    'bound_pair_horz_up': 0.5,
+    'bound_pair_horz_down': 0,
+    'bound_pair_vert_left': 0.5,
+    'bound_pair_vert_right': 0,
+
+    'none': 0.0,  # если узлы не имеют общийх областей
+}
+
 
 def get_type_of_node(node):
     """Определение типа узла."""
@@ -216,10 +315,21 @@ def main():
     matrix = np.zeros((NN, NN))
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать симметричность матрицы
+    t1_1 = []
+    t2_1 = []
+    t1 = []
+    t2 = []
+    t3 = []
+    t4 = []
+
     for node1, node2 in itertools.product(nodes_list, repeat=2):
 
         pair_type = get_type_of_pair(node1, node2)
-        a_ki = vals_dx1_dx1[pair_type]
+
+        t1.append(vals_dx1_dx1[pair_type])
+        t2.append(vals_dx2_dx1[pair_type])
+        t3.append(vals_dx2_dx2[pair_type])
+        t4.append(vals_dx1_dx2[pair_type])
 
         print(
             "node1 {0} --> node2 {1}, pair type: {2}, val={3}".format(
