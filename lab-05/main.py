@@ -12,32 +12,20 @@ from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 
-from linalg import norm_euclid, seidel
-
-EPS = 1E-5  # точность для м. Зейделя
-N = 4  # количество узлов по стороне
+N = 10  # количество узлов по стороне
 NODES = N * N  # всего узлов
 h = 1.0 / N
 
-E = 70  # aluminium
-Mu = 0.34
+E = 50  # aluminium
+Mu = 2.34
 Mu_1 = Mu / (1 - Mu)
 E_1 = E / (1 - Mu*Mu)
 G = G1 = E / (2*(1 + Mu))
 
-P1 = 100
-P2 = -100
+P1 = 1.1
+P2 = -1.2
 
 # константы мапперы со значениями интегралов различных комбинаций
-
-vals_f = {
-    'bound_pair_vert_or_horz': h**2 / 2.0,
-    'bound_self_angle_r_two': h**2 / 3.0,
-    'bound_self_angle_l_one': h**2 / 6.0,
-
-    'inner': h**2,
-    "error": 42
-}
 # TODO: добавить картинку схему узлов и обозначений
 
 # dphi_ik/dx1 * dphi_i/dx1
@@ -100,8 +88,8 @@ vals_dx2_dx1 = {
     # пары узлов на границе
     'bound_pair_horz_up': 0.5,
     'bound_pair_horz_down': 0,
-    'bound_pair_vert_left': 0,
-    'bound_pair_vert_right': 0.5,
+    'bound_pair_vert_left': 0.5,
+    'bound_pair_vert_right': 0,
 
     'none': 0.0,  # если узлы не имеют общийх областей
 }
@@ -114,7 +102,7 @@ vals_dx2_dx2 = {
     'up': -1,
     'down': -1,
 
-    'left': 0.5,
+    'left': 0.0,
     'right': 0.0,
 
     'right_up': 0.0,
@@ -164,10 +152,10 @@ vals_dx1_dx2 = {
     'bound_self_horz_down': -0.5,
 
     # пары узлов на границе
-    'bound_pair_horz_up': 0.5,
-    'bound_pair_horz_down': 0,
-    'bound_pair_vert_left': 0.5,
-    'bound_pair_vert_right': 0,
+    'bound_pair_horz_up': 0.0,
+    'bound_pair_horz_down': 0.5,
+    'bound_pair_vert_left': 0.0,
+    'bound_pair_vert_right': 0.5,
 
     'none': 0.0,  # если узлы не имеют общийх областей
 }
@@ -312,14 +300,13 @@ def main():
             node_num_count += 1
 
     # матрица жесткости
-    for node in nodes_list:
-        print((f"node #{node['node_num']}: row={node['j']}, col={node['i']}\n"
-               f"type: {get_type_of_node(node)}\n"
-               f"----------------------------"))
+    # for node in nodes_list:
+    #     print((f"node #{node['node_num']}: row={node['j']}, col={node['i']}\n"
+    #            f"type: {get_type_of_node(node)}\n"
+    #            f"----------------------------"))
     # правая часть
-    f = np.zeros(2*NODES)
-
-    # matrix = np.zeros((NN, NN))
+    f_upper = np.zeros(NODES)
+    f_lower = np.zeros(NODES)
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать портрет матрицы
 
@@ -347,10 +334,10 @@ def main():
 
         node1_type = get_type_of_node(node1)
         if node1_type == 'bound_vert_left':
-            f[i] = P1
+            f_upper[i] = P1
 
         if node1_type == 'bound_vert_right':
-            f[i] = P2
+            f_lower[i] = P2
 
         val_x1x1 = vals_dx1_dx1[pair_type]
         val_x2x1 = vals_dx2_dx1[pair_type]
@@ -369,13 +356,13 @@ def main():
         t1_7[i-1][j-1] = val_x2x1
         t2_8[i-1][j-1] = val_x1x1
 
-        print(
-            "node1 {0} --> node2 {1}, pair type: {2}".format(
-                node1['node_num'],
-                node2['node_num'],
-                pair_type
-            )
-        )
+        # print(
+        #     "node1 {0} --> node2 {1}, pair type: {2}".format(
+        #         node1['node_num'],
+        #         node2['node_num'],
+        #         pair_type
+        #     )
+        # )
 
     factor1 = E_1 / (1 - Mu_1*Mu_1)
 
@@ -400,22 +387,33 @@ def main():
     part_lower = np.concatenate((t1_5, t2_6), axis=1)
 
     k_matrix = np.concatenate((part_upper, part_lower))
-    print(k_matrix)
-    print(k_matrix.shape)
-
+    f = np.concatenate((f_lower, f_upper))
     # решение слау встроенным решателем
     sol = np.linalg.solve(k_matrix, f)
 
-    # решение слау методом Зейделя
-    # sol = seidel(
-    #     matrix,
-    #     f,
-    #     EPS,
-    #     norm_euclid
-    # )
-    # sol = np.around(sol, decimals=3)
+    print(f"solution shape: {sol.shape}")
+    print(f"nodes: {NODES}, N={N}")
 
-    print(sol)
+    X, Y = np.meshgrid(np.arange(0, 1, h), np.arange(0, 1, h))
+
+    U = np.reshape(sol[:NODES], (N, N))
+    V = np.reshape(sol[NODES:], (N, N))
+
+    fig, ax = plt.subplots()
+    q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
+
+    ax.set_aspect('equal')
+
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+
+    plt.title('Поле перемещений', fontsize=10)
+
+    # plt.savefig('how_to_plot_a_vector_field_in_matplotlib_fig1.png',
+    # bbox_inches='tight')
+    plt.show()
+    plt.close()
+
     # # из вектора решения делаем двумерный вектор
     # # размером NODES на NODES
     # Z = np.reshape(sol, (NODES, NODES))
