@@ -12,18 +12,18 @@ from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 
-N = 10  # количество узлов по стороне
+N = 20  # количество узлов по стороне
 NODES = N * N  # всего узлов
 h = 1.0 / N
 
-E = 50  # aluminium
-Mu = 2.34
+E = 200E3  # aluminium
+Mu = 0.3
 Mu_1 = Mu / (1 - Mu)
 E_1 = E / (1 - Mu*Mu)
 G = G1 = E / (2*(1 + Mu))
 
-P1 = 1.1
-P2 = -1.2
+P1 = -1000
+P2 = -100
 
 # константы мапперы со значениями интегралов различных комбинаций
 # TODO: добавить картинку схему узлов и обозначений
@@ -55,6 +55,7 @@ vals_dx1_dx1 = {
     # пары узлов на границе
     'bound_pair_horz_up': -0.5,
     'bound_pair_horz_down': -0.5,
+
     'bound_pair_vert_left': 0,
     'bound_pair_vert_right': 0,
 
@@ -88,6 +89,7 @@ vals_dx2_dx1 = {
     # пары узлов на границе
     'bound_pair_horz_up': 0.5,
     'bound_pair_horz_down': 0,
+
     'bound_pair_vert_left': 0.5,
     'bound_pair_vert_right': 0,
 
@@ -119,8 +121,9 @@ vals_dx2_dx2 = {
     'bound_self_horz_down': 1,
 
     # пары узлов на границе
-    'bound_pair_horz_up': 0.0,
-    'bound_pair_horz_down': 0.0,
+    'bound_pair_horz_up': 0,
+    'bound_pair_horz_down': 0,
+
     'bound_pair_vert_left': -0.5,
     'bound_pair_vert_right': -0.5,
 
@@ -154,6 +157,7 @@ vals_dx1_dx2 = {
     # пары узлов на границе
     'bound_pair_horz_up': 0.0,
     'bound_pair_horz_down': 0.5,
+
     'bound_pair_vert_left': 0.0,
     'bound_pair_vert_right': 0.5,
 
@@ -339,6 +343,12 @@ def main():
         if node1_type == 'bound_vert_right':
             f_lower[i] = P2
 
+        # if node1_type == 'bound_horz_down':
+        #     f_lower[i] = 0
+
+        # if node1_type == 'bound_horz_up':
+        #     f_upper[i] = 0
+
         val_x1x1 = vals_dx1_dx1[pair_type]
         val_x2x1 = vals_dx2_dx1[pair_type]
         val_x2x2 = vals_dx2_dx2[pair_type]
@@ -364,7 +374,7 @@ def main():
         #     )
         # )
 
-    factor1 = E_1 / (1 - Mu_1*Mu_1)
+    factor1 = E_1 / (1.0 - Mu_1*Mu_1)
 
     t1_1 *= factor1
     t2_2 *= factor1*Mu_1
