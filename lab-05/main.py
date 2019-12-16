@@ -16,14 +16,14 @@ N = 20  # количество узлов по стороне
 NODES = N * N  # всего узлов
 h = 1.0 / N
 
-E = 200E3  # aluminium
-Mu = 0.3
+E = 100E2  # aluminium
+Mu = 0.1
 Mu_1 = Mu / (1 - Mu)
 E_1 = E / (1 - Mu*Mu)
 G = G1 = E / (2*(1 + Mu))
 
-P1 = -1000
-P2 = -100
+P1 = 70
+P2 = -70
 
 # константы мапперы со значениями интегралов различных комбинаций
 # TODO: добавить картинку схему узлов и обозначений
@@ -336,19 +336,6 @@ def main():
         i = node1['node_num']
         j = node2['node_num']
 
-        node1_type = get_type_of_node(node1)
-        if node1_type == 'bound_vert_left':
-            f_upper[i] = P1
-
-        if node1_type == 'bound_vert_right':
-            f_lower[i] = P2
-
-        # if node1_type == 'bound_horz_down':
-        #     f_lower[i] = 0
-
-        # if node1_type == 'bound_horz_up':
-        #     f_upper[i] = 0
-
         val_x1x1 = vals_dx1_dx1[pair_type]
         val_x2x1 = vals_dx2_dx1[pair_type]
         val_x2x2 = vals_dx2_dx2[pair_type]
@@ -365,6 +352,15 @@ def main():
 
         t1_7[i-1][j-1] = val_x2x1
         t2_8[i-1][j-1] = val_x1x1
+       
+        node1_type = get_type_of_node(node1)
+        # f_upper[i] = 
+        if node1_type == 'bound_vert_left':
+            f_upper[i-1] = P1
+
+        if node1_type == 'bound_vert_right':
+            f_lower[i-1] = P2
+
 
         # print(
         #     "node1 {0} --> node2 {1}, pair type: {2}".format(
@@ -401,13 +397,10 @@ def main():
     # решение слау встроенным решателем
     sol = np.linalg.solve(k_matrix, f)
 
-    print(f"solution shape: {sol.shape}")
-    print(f"nodes: {NODES}, N={N}")
-
     X, Y = np.meshgrid(np.arange(0, 1, h), np.arange(0, 1, h))
 
-    U = np.reshape(sol[:NODES], (N, N))
-    V = np.reshape(sol[NODES:], (N, N))
+    U = sol[:NODES]
+    V = sol[NODES:]
 
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
