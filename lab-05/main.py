@@ -14,7 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 N = 20  # количество узлов по стороне
 NODES = N * N  # всего узлов
-h = 1.0 / N
+h = 1.0 / (N-1)
 
 E = 100E2  # aluminium
 Mu = 0.1
@@ -218,7 +218,7 @@ def get_type_of_pair(node1, node2):
 
     node1_type = get_type_of_node(node1)
     node2_type = get_type_of_node(node2)
-    # print(f"{i1=} {i2=} {j1=} {j2=}")
+
     res = ''
 
     if ii == 0 and jj == 0:
@@ -308,6 +308,7 @@ def main():
     #     print((f"node #{node['node_num']}: row={node['j']}, col={node['i']}\n"
     #            f"type: {get_type_of_node(node)}\n"
     #            f"----------------------------"))
+
     # правая часть
     f_upper = np.zeros(NODES)
     f_lower = np.zeros(NODES)
@@ -352,15 +353,14 @@ def main():
 
         t1_7[i-1][j-1] = val_x2x1
         t2_8[i-1][j-1] = val_x1x1
-       
+
         node1_type = get_type_of_node(node1)
-        # f_upper[i] = 
+
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P1
 
         if node1_type == 'bound_vert_right':
             f_lower[i-1] = P2
-
 
         # print(
         #     "node1 {0} --> node2 {1}, pair type: {2}".format(
@@ -394,13 +394,12 @@ def main():
 
     k_matrix = np.concatenate((part_upper, part_lower))
     f = np.concatenate((f_lower, f_upper))
-    # решение слау встроенным решателем
+    # решение слау
     sol = np.linalg.solve(k_matrix, f)
 
-    X, Y = np.meshgrid(np.arange(0, 1, h), np.arange(0, 1, h))
+    X, Y = np.meshgrid(np.arange(0, 1+h, h), np.arange(0, 1+h, h))
 
-    U = sol[:NODES]
-    V = sol[NODES:]
+    U, V = np.split(sol, 2)
 
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
@@ -416,35 +415,6 @@ def main():
     # bbox_inches='tight')
     plt.show()
     plt.close()
-
-    # # из вектора решения делаем двумерный вектор
-    # # размером NODES на NODES
-    # Z = np.reshape(sol, (NODES, NODES))
-    # # создание сетки
-    # X = np.arange(0.0, 1.0, h)
-    # Y = np.arange(0.0, 1.0, h)
-    # X, Y = np.meshgrid(X, Y)
-
-    # # график поверхности 3d
-    # fig = plt.figure()
-    # ax = fig.gca(projection='3d')
-    # surf = ax.plot_surface(
-    #     X, Y, Z,
-    #     cmap=cm.coolwarm,
-    #     linewidth=1,
-    #     antialiased=True
-    # )
-
-    # # ax.zaxis.set_major_formatter(FormatStrFormatter('%.0001f'))
-
-    # # шкала - бар
-    # # fig.colorbar(
-    # #     mappable=surf,
-    # #     shrink=0.5,
-    # #     aspect=5
-    # # )
-
-    # plt.show()
 
 
 if __name__ == "__main__":
