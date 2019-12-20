@@ -13,17 +13,20 @@ from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 
 N = 20  # количество узлов по стороне
-NODES = N * N  # всего узлов
+NODES = N * (N-2)  # всего узлов (без закрепленных границ)
 h = 1.0 / (N-1)
 
-E = 100E2  # aluminium
-Mu = 0.1
+E = 70  # aluminium
+Mu = 0.4
 Mu_1 = Mu / (1 - Mu)
 E_1 = E / (1 - Mu*Mu)
 G = G1 = E / (2*(1 + Mu))
 
-P1 = 70
-P2 = -70
+r_part = (h - h/2)*(1 + (1 + 1/h) ** 0.5)
+print(f"{r_part}")
+
+P1 = 100*r_part
+P2 = -100*r_part
 
 # константы мапперы со значениями интегралов различных комбинаций
 # TODO: добавить картинку схему узлов и обозначений
@@ -294,14 +297,18 @@ def main():
     # обход низу вверх, слева направо
     for row_num in range(1, N + 1):
         for col_num in range(1, N + 1):
-            nodes_list.append(
-                {
-                    'node_num': node_num_count,
-                    'i': col_num,
-                    'j': row_num
-                }
-            )
-            node_num_count += 1
+            # пропускаем узлы за закрепоенной границе
+            if (1 <= col_num <= N) and (row_num == 1 or row_num == N):
+                continue
+            else:
+                nodes_list.append(
+                    {
+                        'node_num': node_num_count,
+                        'i': col_num,
+                        'j': row_num
+                    }
+                )
+                node_num_count += 1
 
     # матрица жесткости
     # for node in nodes_list:
