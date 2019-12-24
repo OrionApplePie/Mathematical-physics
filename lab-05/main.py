@@ -16,7 +16,7 @@ N = 20  # количество узлов по стороне
 NODES = N * (N-2)  # всего узлов (без закрепленных границ)
 h = 1.0 / (N-1)
 
-E = 70  # aluminium
+E = 70000  # aluminium
 Mu = 0.4
 Mu_1 = Mu / (1 - Mu)
 E_1 = E / (1 - Mu*Mu)
@@ -25,8 +25,8 @@ G = G1 = E / (2*(1 + Mu))
 r_part = (h - h/2)*(1 + (1 + 1/h) ** 0.5)
 print(f"{r_part}")
 
-P1 = 100*r_part
-P2 = -100*r_part
+P1 = 10000*r_part
+P2 = -10000*r_part
 
 # константы мапперы со значениями интегралов различных комбинаций
 # TODO: добавить картинку схему узлов и обозначений
@@ -362,10 +362,8 @@ def main():
         t2_8[i-1][j-1] = val_x1x1
 
         node1_type = get_type_of_node(node1)
-
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P1
-
         if node1_type == 'bound_vert_right':
             f_lower[i-1] = P2
 
@@ -403,15 +401,24 @@ def main():
     f = np.concatenate((f_lower, f_upper))
     # решение слау
     sol = np.linalg.solve(k_matrix, f)
+    n, = sol.shape
+    # sol = np.round(sol, 2)
+    zer = np.zeros(N)
 
-    X, Y = np.meshgrid(np.arange(0, 1+h, h), np.arange(0, 1+h, h))
+    X, Y = np.meshgrid(
+        np.linspace(0, 1, N),
+        np.linspace(0, 1, N)
+    )
 
     U, V = np.split(sol, 2)
+
+    U = np.concatenate((zer, U, zer))
+    V = np.concatenate((zer, V, zer))
 
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
 
-    ax.set_aspect('equal')
+    # ax.set_aspect('equal')
 
     plt.xlim(0, 1)
     plt.ylim(0, 1)
