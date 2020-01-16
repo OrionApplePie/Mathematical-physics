@@ -12,303 +12,29 @@ from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 
-N = 20  # количество узлов по стороне
-NODES = N * (N-2)  # всего узлов (без закрепленных границ)
-h = 1.0 / (N-1)
-
-E = 70  # aluminium
-Mu = 0.4
-Mu_1 = Mu / (1 - Mu)
-E_1 = E / (1 - Mu*Mu)
-G = G1 = E / (2*(1 + Mu))
-
-r_part = (h - h/2)*(1 + (1 + 1/h) ** 0.5)
-print(f"{r_part}")
-
-P1 = 100*r_part
-P2 = -100*r_part
-
-# константы мапперы со значениями интегралов различных комбинаций
-# TODO: добавить картинку схему узлов и обозначений
-
-# dphi_ik/dx1 * dphi_i/dx1
-vals_dx1_dx1 = {
-    # внутренние (неграничные) пары узлов
-    'self_inner': 2.0,
-
-    'up': 0.0,
-    'down': 0.0,
-
-    'left': -1.0,
-    'right': -1.0,
-
-    'right_up': 0.0,
-    'left_down': 0.0,
-
-    # узел сам с собой на границе
-    'bound_self_triangle_one': 0.5,  # и верхний и нижний - интегралы одинаковые
-    'bound_self_triangle_two': 0.5,
-
-    'bound_self_vert_left': 1,
-    'bound_self_vert_right': 1,
-
-    'bound_self_horz_up': 1,
-    'bound_self_horz_down': 1,
-
-    # пары узлов на границе
-    'bound_pair_horz_up': -0.5,
-    'bound_pair_horz_down': -0.5,
-
-    'bound_pair_vert_left': 0,
-    'bound_pair_vert_right': 0,
-
-    'none': 0.0,  # если узлы не имеют общийх областей
-}
-
-# dphi_ik/dx2 * dphi_i/dx1
-vals_dx2_dx1 = {
-    # внутренние (неграничные) пары узлов
-    'self_inner': -1,
-
-    'up': 0.5,
-    'down': 0.5,
-
-    'left': 0.5,
-    'right': 0.5,
-
-    'right_up': -0.5,
-    'left_down': -0.5,
-
-    # узел сам с собой на границе
-    'bound_self_triangle_one': -0.5,  # и верхний и нижний - интегралы одинаковые
-    'bound_self_triangle_two': 0.0,
-
-    'bound_self_vert_left': -0.5,
-    'bound_self_vert_right': -0.5,
-
-    'bound_self_horz_up': -0.5,
-    'bound_self_horz_down': -0.5,
-
-    # пары узлов на границе
-    'bound_pair_horz_up': 0.5,
-    'bound_pair_horz_down': 0,
-
-    'bound_pair_vert_left': 0.5,
-    'bound_pair_vert_right': 0,
-
-    'none': 0.0,  # если узлы не имеют общийх областей
-}
-
-# dphi_ik/dx2 * dphi_i/dx1
-vals_dx2_dx2 = {
-    # внутренние (неграничные) пары узлов
-    'self_inner': 2,
-
-    'up': -1,
-    'down': -1,
-
-    'left': 0.0,
-    'right': 0.0,
-
-    'right_up': 0.0,
-    'left_down': 0.0,
-
-    # узел сам с собой на границе
-    'bound_self_triangle_one': 0.5,  # и верхний и нижний - интегралы одинаковые
-    'bound_self_triangle_two': 0.5,
-
-    'bound_self_vert_left': 1,
-    'bound_self_vert_right': 1,
-
-    'bound_self_horz_up': 1,
-    'bound_self_horz_down': 1,
-
-    # пары узлов на границе
-    'bound_pair_horz_up': 0,
-    'bound_pair_horz_down': 0,
-
-    'bound_pair_vert_left': -0.5,
-    'bound_pair_vert_right': -0.5,
-
-    'none': 0.0,  # если узлы не имеют общийх областей
-}
-
-# dphi_ik/dx2 * dphi_i/dx1
-vals_dx1_dx2 = {
-    # внутренние (неграничные) пары узлов
-    'self_inner': -1,
-
-    'up': 0.5,
-    'down': 0.5,
-
-    'left': 0.5,
-    'right': 0.5,
-
-    'right_up': -0.5,
-    'left_down': -0.5,
-
-    # узел сам с собой на границе
-    'bound_self_triangle_one': -0.5,  # и верхний и нижний - интегралы одинаковые
-    'bound_self_triangle_two': 0.0,
-
-    'bound_self_vert_left': -0.5,
-    'bound_self_vert_right': -0.5,
-
-    'bound_self_horz_up': -0.5,
-    'bound_self_horz_down': -0.5,
-
-    # пары узлов на границе
-    'bound_pair_horz_up': 0.0,
-    'bound_pair_horz_down': 0.5,
-
-    'bound_pair_vert_left': 0.0,
-    'bound_pair_vert_right': 0.5,
-
-    'none': 0.0,  # если узлы не имеют общийх областей
-}
-
-
-def get_type_of_node(node):
-    """Определение типа узла."""
-    i = node['i']
-    j = node['j']
-
-    res = ''
-
-    if (1 < i < N) and (1 < j < N):
-        res = 'inner'  # неграничный внутренний узел
-
-    elif (i == 1 and j == 1) or (i == N and j == N):
-        # левый нижний или верхний правый (2 кусочка треугольника)
-        res = 'bound_angle_r_two'
-
-    elif (i == 1 and j == N) or (i == N and j == 1):
-        # левый верхний или нижний правый (1 кусочек треугольника)
-        res = 'bound_angle_l_one'
-
-    elif (i == 1 and j != 1 and j != N):
-        # на левой вертикали
-        res = 'bound_vert_left'
-
-    elif (i == N and j != 1 and j != N):
-        # на правой вертикили
-        res = 'bound_vert_right'
-
-    elif (j == 1 and i != 1 and i != N):
-        # нижняя горизонталь
-        res = 'bound_horz_down'
-
-    elif (j == N and i != 1 and i != N):
-        # верхняя горизонталь
-        res = 'bound_horz_up'
-
-    else:
-        raise ValueError
-
-    return res
-
-
-def get_type_of_pair(node1, node2):
-    """Функция вычисляет 'тип соседства' 2х узлов.
-    Работает только для квадратной области."""
-    i1 = node1['i']
-    i2 = node2['i']
-    j1 = node1['j']
-    j2 = node2['j']
-
-    ii = i1 - i2
-    jj = j1 - j2
-
-    node1_type = get_type_of_node(node1)
-    node2_type = get_type_of_node(node2)
-
-    res = ''
-
-    if ii == 0 and jj == 0:
-        res = 'self_inner'
-    elif ii == 1 and jj == 1:
-        res = 'left_down'
-    elif ii == -1 and jj == -1:
-        res = 'right_up'
-    elif ii == 0 and jj == 1:
-        res = 'down'
-    elif ii == 0 and jj == -1:
-        res = 'up'
-    elif ii == -1 and jj == 0:
-        res = 'right'
-    elif ii == 1 and jj == 0:
-        res = 'left'
-    else:
-        res = 'none'  # нет общих областей - интеграл равен 0
-
-    # если на границе
-    if (
-        i1 == i2 == 1 or
-        i1 == i2 == N or
-        j1 == j2 == 1 or
-        j1 == j2 == N
-    ):
-        if (ii == 0 and jj == 0):  # если узел с самим собой
-            if node1_type == 'bound_angle_l_one':
-                res = 'bound_self_triangle_one'
-
-            elif node1_type == 'bound_angle_r_two':
-                res = 'bound_self_triangle_two'
-
-            elif node1_type == 'bound_vert_left':
-                res = 'bound_self_vert_left'
-
-            elif node1_type == 'bound_vert_right':
-                res = 'bound_self_vert_right'
-
-            elif node1_type == 'bound_horz_up':
-                res = 'bound_self_horz_up'
-
-            elif node1_type == 'bound_horz_down':
-                res = 'bound_self_horz_down'
-
-            else:
-                raise ValueError  # TODO:fix me!!!
-
-        # проверка - если сосед
-        elif abs(ii) == 1 and j1 == 1:
-            res = 'bound_pair_horz_down'
-
-        elif abs(ii) == 1 and j1 == N:
-            res = 'bound_pair_horz_up'
-
-        elif abs(jj) == 1 and i1 == 1:
-            res = 'bound_pair_vert_left'
-
-        elif abs(jj) == 1 and i1 == N:
-            res = 'bound_pair_vert_right'
-
-        else:
-            res = 'none'
-
-    return res
+from integrals import vals_dx1_dx1, vals_dx1_dx2, vals_dx2_dx1, vals_dx2_dx2
+from utils import create_nodes, get_type_of_node, get_type_of_pair
 
 
 def main():
-    node_num_count = 1
-    nodes_list = []
-    # обходим все узлы и сохраняем в список вместе с координатами,
-    # координаты (j, i) - номер строки, номер колонки
-    # обход низу вверх, слева направо
-    for row_num in range(1, N + 1):
-        for col_num in range(1, N + 1):
-            # пропускаем узлы за закрепоенной границе
-            if (1 <= col_num <= N) and (row_num == 1 or row_num == N):
-                continue
-            else:
-                nodes_list.append(
-                    {
-                        'node_num': node_num_count,
-                        'i': col_num,
-                        'j': row_num
-                    }
-                )
-                node_num_count += 1
+    N = 25  # количество узлов по стороне
+    
+    NODES = N * (N-2)  # всего узлов (без закрепленных границ)
+    h = 1.0 / (N-1)
+    
+    E = 700  # aluminium
+    Mu = 0.04
+    Mu_1 = Mu / (1 - Mu)
+    E_1 = E / (1 - Mu*Mu)
+    G = G1 = E / (2*(1 + Mu))
+    
+    r_part = (h - h/2)*(1 + (1 + 1/h) ** 0.5)
+    print(f"{r_part}")
+    
+    P1 = 100*r_part
+    P2 = -100*r_part
+
+    nodes_list = create_nodes(N)
 
     # матрица жесткости
     # for node in nodes_list:
@@ -339,7 +65,7 @@ def main():
     t2_8 = np.zeros((NODES, NODES))
 
     for node1, node2 in itertools.product(nodes_list, repeat=2):
-        pair_type = get_type_of_pair(node1, node2)
+        pair_type = get_type_of_pair(node1, node2, N)
 
         i = node1['node_num']
         j = node2['node_num']
@@ -361,7 +87,7 @@ def main():
         t1_7[i-1][j-1] = val_x2x1
         t2_8[i-1][j-1] = val_x1x1
 
-        node1_type = get_type_of_node(node1)
+        node1_type = get_type_of_node(node1, N)
 
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P1
@@ -377,14 +103,14 @@ def main():
         #     )
         # )
 
-    factor1 = E_1 / (1.0 - Mu_1*Mu_1)
+    factor1 = E / (1.0 - Mu*Mu)
 
     t1_1 *= factor1
-    t2_2 *= factor1*Mu_1
+    t2_2 *= factor1*Mu
     t1_3 *= G
     t2_4 *= G
 
-    t1_5 *= factor1*Mu_1
+    t1_5 *= factor1*Mu
     t2_6 *= factor1
     t1_7 *= G
     t2_8 *= G
@@ -406,7 +132,7 @@ def main():
 
     X, Y = np.meshgrid(np.arange(0, 1+h, h), np.arange(0, 1+h, h))
 
-    U, V = np.split(sol, 2)
+    V, U = np.split(sol, 2)
 
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
