@@ -35,7 +35,7 @@ def main():
     P2 =  -80*r_part
 
     nodes_list = create_nodes(N)
-
+    print(f"nodes # = {len(nodes_list)}")
     # матрица жесткости
     # for node in nodes_list:
     #     print((f"node #{node['node_num']}: row={node['j']}, col={node['i']}\n"
@@ -45,6 +45,8 @@ def main():
     # правая часть
     f_upper = np.zeros(NODES)
     f_lower = np.zeros(NODES)
+    ff = np.zeros(NODES + NODES)
+
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать портрет матрицы
 
@@ -63,7 +65,7 @@ def main():
 
     t1_7 = np.zeros((NODES, NODES))
     t2_8 = np.zeros((NODES, NODES))
-
+    
     for node1, node2 in itertools.product(nodes_list, repeat=2):
         pair_type = get_type_of_pair(node1, node2, N)
 
@@ -91,8 +93,16 @@ def main():
 
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P1
+            f_lower[i-1] = P1
+
         if node1_type == 'bound_vert_right':
+            f_upper[i-1] = P2
             f_lower[i-1] = P2
+
+        if node1_type == 'bound_vert_left':
+            ff[i-1] = P1
+        if node1_type == 'bound_vert_right':
+            ff[i-1 + NODES] = P2
 
         # print(
         #     "node1 {0} --> node2 {1}, pair type: {2}".format(
@@ -126,8 +136,9 @@ def main():
 
     k_matrix = np.concatenate((part_upper, part_lower))
     f = np.concatenate((f_lower, f_upper))
+    print(f)
     # решение слау
-    sol = np.linalg.solve(k_matrix, f)
+    sol = np.linalg.solve(k_matrix, ff)
     n, = sol.shape
     # sol = np.round(sol, 2)
     zer = np.zeros(N)
