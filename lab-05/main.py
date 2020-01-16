@@ -91,7 +91,6 @@ def main():
 
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P1
-
         if node1_type == 'bound_vert_right':
             f_lower[i-1] = P2
 
@@ -129,15 +128,24 @@ def main():
     f = np.concatenate((f_lower, f_upper))
     # решение слау
     sol = np.linalg.solve(k_matrix, f)
+    n, = sol.shape
+    # sol = np.round(sol, 2)
+    zer = np.zeros(N)
 
-    X, Y = np.meshgrid(np.arange(0, 1+h, h), np.arange(0, 1+h, h))
+    X, Y = np.meshgrid(
+        np.linspace(0, 1, N),
+        np.linspace(0, 1, N)
+    )
 
     V, U = np.split(sol, 2)
+
+    U = np.concatenate((zer, U, zer))
+    V = np.concatenate((zer, V, zer))
 
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
 
-    ax.set_aspect('equal')
+    # ax.set_aspect('equal')
 
     plt.xlim(0, 1)
     plt.ylim(0, 1)
