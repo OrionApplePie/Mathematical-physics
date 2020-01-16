@@ -31,8 +31,8 @@ def main():
     r_part = (h - h/2)*(1 + (1 + 1/h) ** 0.5)
     print(f"{r_part}")
     
-    P1 = 100*r_part
-    P2 = -100*r_part
+    P1 = 80*r_part
+    P2 =  -80*r_part
 
     nodes_list = create_nodes(N)
 
@@ -102,14 +102,14 @@ def main():
         #     )
         # )
 
-    factor1 = E / (1.0 - Mu*Mu)
+    factor1 = E / (1.0 - Mu_1*Mu_1)
 
     t1_1 *= factor1
-    t2_2 *= factor1*Mu
+    t2_2 *= factor1*Mu_1
     t1_3 *= G
     t2_4 *= G
 
-    t1_5 *= factor1*Mu
+    t1_5 *= factor1*Mu_1
     t2_6 *= factor1
     t1_7 *= G
     t2_8 *= G
@@ -137,7 +137,7 @@ def main():
         np.linspace(0, 1, N)
     )
 
-    V, U = np.split(sol, 2)
+    U, V = np.split(sol, 2)
 
     U = np.concatenate((zer, U, zer))
     V = np.concatenate((zer, V, zer))
