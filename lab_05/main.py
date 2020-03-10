@@ -1,8 +1,8 @@
 """
 Плоская задача теории упругости. Область - единичный квадрат.
 Верхняя и нижняя стороны закреплены, на левую и правую действуют
-поверхностные силы P, 
-объемные силы f = 0
+поверхностные силы P,
+объемные силы f = (0, 0)
 """
 import itertools
 
@@ -12,14 +12,23 @@ from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 
-from integrals import vals_dx1_dx1, vals_dx1_dx2, vals_dx2_dx1, vals_dx2_dx2
-from utils import create_nodes, get_type_of_node, get_type_of_pair
+from lab_05.integrals import (
+    vals_dx1_dx1,
+    vals_dx1_dx2,
+    vals_dx2_dx1,
+    vals_dx2_dx2
+)
+from lab_05.utils import (
+    create_nodes,
+    get_type_of_node,
+    get_type_of_pair
+)
 
 
 def main():
-    N = 20  # количество узлов по стороне
+    N = 28  # количество узлов по стороне
 
-    NODES = N * N # всего узлов (без закрепленных границ)
+    NODES = N * (N - 2)  # всего узлов (без закрепленных границ)
     h = 1.0 / (N - 1)
 
     E = 2.1e6
@@ -27,14 +36,12 @@ def main():
     Mu_1 = Mu / (1 - Mu)
     E_1 = E / (1 - Mu * Mu)
     G = E / (2 * (1 + Mu))
-    G_1 = G
 
     factor1 = E_1 / (1.0 - Mu_1 * Mu_1)
-
     r_part = (h - h / 2) * (1 + (1 + 1 / h) ** 0.5)
 
-    P_left = (100000, 0)
-    P_right = (-100000, 0)
+    P_left = (10000, 0)
+    P_right = (-20000, 0)
 
     nodes_list = create_nodes(N)
 
@@ -47,9 +54,6 @@ def main():
     # правая часть
     f_upper = np.zeros(NODES)
     f_lower = np.zeros(NODES)
-
-    # обходим каждый узел с каждым и заполняем матрицу жесткости
-    # TODO: использовать портрет матрицы
 
     # По порядку как в уравнениях (3)
     # первый индекс - это верхний у t^(i)
@@ -66,7 +70,9 @@ def main():
 
     t1_7 = np.zeros((NODES, NODES))
     t2_8 = np.zeros((NODES, NODES))
-    
+
+    # обходим каждый узел с каждым и заполняем матрицу жесткости
+    # TODO: использовать портрет матрицы?
     for node1, node2 in itertools.product(nodes_list, repeat=2):
         pair_type = get_type_of_pair(node1, node2, N)
 
@@ -95,7 +101,6 @@ def main():
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P_left[0]
             # f_lower[i-1] = P_left[1]
-
 
         if node1_type == 'bound_vert_right':
             f_upper[i-1] = P_right[0]
