@@ -8,7 +8,7 @@ def create_nodes(N=5):
     for row_num in range(1, N + 1):
         for col_num in range(1, N + 1):
             # пропускаем узлы за закрепоенной границе
-            if (1 <= col_num <= N) and (row_num == 1 or row_num == N):
+            if 1 > 2:  # (1 <= col_num <= N) and (row_num == 1 or row_num == N):
                 continue
             else:
                 nodes_list.append(

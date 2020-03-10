@@ -17,21 +17,24 @@ from utils import create_nodes, get_type_of_node, get_type_of_pair
 
 
 def main():
-    N = 25  # количество узлов по стороне
+    N = 20  # количество узлов по стороне
 
-    NODES = N * (N - 2)  # всего узлов (без закрепленных границ)
+    NODES = N * N # всего узлов (без закрепленных границ)
     h = 1.0 / (N - 1)
 
     E = 2.1e6
     Mu = 0.3
     Mu_1 = Mu / (1 - Mu)
-    E_1 = E / (1 - Mu*Mu)
-    G = G1 = E / (2*(1 + Mu))
+    E_1 = E / (1 - Mu * Mu)
+    G = E / (2 * (1 + Mu))
+    G_1 = G
+
+    factor1 = E_1 / (1.0 - Mu_1 * Mu_1)
 
     r_part = (h - h / 2) * (1 + (1 + 1 / h) ** 0.5)
 
-    P1 = 10000*r_part
-    P2 =  -10000*r_part
+    P_left = (100000, 0)
+    P_right = (-100000, 0)
 
     nodes_list = create_nodes(N)
 
@@ -90,22 +93,22 @@ def main():
         node1_type = get_type_of_node(node1, N)
 
         if node1_type == 'bound_vert_left':
-            f_upper[i-1] = P1
-            f_lower[i-1] = P1
+            f_upper[i-1] = P_left[0]
+            # f_lower[i-1] = P_left[1]
+
 
         if node1_type == 'bound_vert_right':
-            f_upper[i-1] = P2
-            f_lower[i-1] = P2
+            f_upper[i-1] = P_right[0]
+            # f_lower[i-1] = P_right[1]
 
         # print(
-        #     "node1 {0} --> node2 {1}, pair type: {2}".format(
+        #     "node1 {0} --> node2 {1}, node1 type: {2}, pair type --> {3}".format(
         #         node1['node_num'],
         #         node2['node_num'],
+        #         get_type_of_node(node1, N),
         #         pair_type
         #     )
         # )
-
-    factor1 = E / (1.0 - Mu_1 * Mu_1)
 
     t1_1 *= factor1
     t2_2 *= factor1 * Mu_1
@@ -128,12 +131,11 @@ def main():
     part_lower = np.concatenate((t1_5, t2_6), axis=1)
 
     k_matrix = np.concatenate((part_upper, part_lower))
-    f = np.concatenate((f_lower, f_upper))
+    f = np.concatenate((f_upper, f_lower))
 
     # решение слау
     sol = np.linalg.solve(k_matrix, f)
     n, = sol.shape
-    zer = np.zeros(N)
 
     X, Y = np.meshgrid(
         np.linspace(0, 1, N),
@@ -141,9 +143,6 @@ def main():
     )
 
     U, V = np.split(sol, 2)
-
-    U = np.concatenate((zer, U, zer))
-    V = np.concatenate((zer, V, zer))
 
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
