@@ -18,24 +18,23 @@ from utils import create_nodes, get_type_of_node, get_type_of_pair
 
 def main():
     N = 25  # количество узлов по стороне
-    
-    NODES = N * (N-2)  # всего узлов (без закрепленных границ)
-    h = 1.0 / (N-1)
-    
-    E = 700  # aluminium
-    Mu = 0.04
+
+    NODES = N * (N - 2)  # всего узлов (без закрепленных границ)
+    h = 1.0 / (N - 1)
+
+    E = 2.1e6
+    Mu = 0.3
     Mu_1 = Mu / (1 - Mu)
     E_1 = E / (1 - Mu*Mu)
     G = G1 = E / (2*(1 + Mu))
-    
-    r_part = (h - h/2)*(1 + (1 + 1/h) ** 0.5)
-    print(f"{r_part}")
-    
-    P1 = 80*r_part
-    P2 =  -80*r_part
+
+    r_part = (h - h / 2) * (1 + (1 + 1 / h) ** 0.5)
+
+    P1 = 10000*r_part
+    P2 =  -10000*r_part
 
     nodes_list = create_nodes(N)
-    print(f"nodes # = {len(nodes_list)}")
+
     # матрица жесткости
     # for node in nodes_list:
     #     print((f"node #{node['node_num']}: row={node['j']}, col={node['i']}\n"
@@ -45,15 +44,14 @@ def main():
     # правая часть
     f_upper = np.zeros(NODES)
     f_lower = np.zeros(NODES)
-    ff = np.zeros(NODES + NODES)
 
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать портрет матрицы
 
     # По порядку как в уравнениях (3)
     # первый индекс - это верхний у t^(i)
-    # в уравнеиях надо поправить чтобы шло t1, t2 - нужно для решения слау
-    #
+    # в уравнеиях надо поправить, чтобы шло t1, t2 - нужно для решения слау
+
     t1_1 = np.zeros((NODES, NODES))
     t2_2 = np.zeros((NODES, NODES))
 
@@ -99,11 +97,6 @@ def main():
             f_upper[i-1] = P2
             f_lower[i-1] = P2
 
-        if node1_type == 'bound_vert_left':
-            ff[i-1] = P1
-        if node1_type == 'bound_vert_right':
-            ff[i-1 + NODES] = P2
-
         # print(
         #     "node1 {0} --> node2 {1}, pair type: {2}".format(
         #         node1['node_num'],
@@ -112,14 +105,14 @@ def main():
         #     )
         # )
 
-    factor1 = E / (1.0 - Mu_1*Mu_1)
+    factor1 = E / (1.0 - Mu_1 * Mu_1)
 
     t1_1 *= factor1
-    t2_2 *= factor1*Mu_1
+    t2_2 *= factor1 * Mu_1
     t1_3 *= G
     t2_4 *= G
 
-    t1_5 *= factor1*Mu_1
+    t1_5 *= factor1 * Mu_1
     t2_6 *= factor1
     t1_7 *= G
     t2_8 *= G
@@ -136,11 +129,10 @@ def main():
 
     k_matrix = np.concatenate((part_upper, part_lower))
     f = np.concatenate((f_lower, f_upper))
-    print(f)
+
     # решение слау
-    sol = np.linalg.solve(k_matrix, ff)
+    sol = np.linalg.solve(k_matrix, f)
     n, = sol.shape
-    # sol = np.round(sol, 2)
     zer = np.zeros(N)
 
     X, Y = np.meshgrid(
@@ -156,15 +148,13 @@ def main():
     fig, ax = plt.subplots()
     q = ax.quiver(X, Y, U, V, units='xy', scale=2, color='red')
 
-    # ax.set_aspect('equal')
+    ax.set_aspect('equal')
 
     plt.xlim(0, 1)
     plt.ylim(0, 1)
 
     plt.title('Поле перемещений', fontsize=10)
 
-    # plt.savefig('how_to_plot_a_vector_field_in_matplotlib_fig1.png',
-    # bbox_inches='tight')
     plt.show()
     plt.close()
 
