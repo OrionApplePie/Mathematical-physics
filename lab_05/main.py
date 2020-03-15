@@ -4,7 +4,7 @@
 поверхностные силы P,
 объемные силы f = (0, 0)
 """
-import itertools
+from itertools import combinations_with_replacement
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,22 +26,18 @@ from lab_05.utils import (
 
 
 def main():
-    N = 28  # количество узлов по стороне
-
+    N = 21  # количество узлов по стороне
     NODES = N * (N - 2)  # всего узлов (без закрепленных границ)
     h = 1.0 / (N - 1)
 
     E = 2.1e6
     Mu = 0.3
-    Mu_1 = Mu / (1 - Mu)
-    E_1 = E / (1 - Mu * Mu)
-    G = E / (2 * (1 + Mu))
+    G = E / (2. * (1. + Mu))
+    factor1 = E / (1. - Mu * Mu)
 
-    factor1 = E_1 / (1.0 - Mu_1 * Mu_1)
-    r_part = (h - h / 2) * (1 + (1 + 1 / h) ** 0.5)
-
+    r_part = (h - h / 2.) * (1. + (1. + 1. / h) ** 0.5)
     P_left = (10000, 0)
-    P_right = (-20000, 0)
+    P_right = (-10000, 0)
 
     nodes_list = create_nodes(N)
 
@@ -73,7 +69,7 @@ def main():
 
     # обходим каждый узел с каждым и заполняем матрицу жесткости
     # TODO: использовать портрет матрицы?
-    for node1, node2 in itertools.product(nodes_list, repeat=2):
+    for node1, node2 in combinations_with_replacement(nodes_list, r=2):
         pair_type = get_type_of_pair(node1, node2, N)
 
         i = node1['node_num']
@@ -90,37 +86,53 @@ def main():
         t1_3[i-1][j-1] = val_x2x2
         t2_4[i-1][j-1] = val_x1x2
 
-        t1_5[i-1][j-1] = val_x1x2
+        t1_5[i-1][j-1] = val_x1x2  # изменен порядок след.
         t2_6[i-1][j-1] = val_x2x2
 
         t1_7[i-1][j-1] = val_x2x1
         t2_8[i-1][j-1] = val_x1x1
 
+        # и симметричные эл.
+
+        t1_1[j-1][i-1] = val_x1x1
+        t2_2[j-1][i-1] = val_x2x1
+
+        t1_3[j-1][i-1] = val_x2x2
+        t2_4[j-1][i-1] = val_x1x2
+
+        t1_5[j-1][i-1] = val_x1x2  # изменен порядок след.
+        t2_6[j-1][i-1] = val_x2x2
+
+        t1_7[j-1][i-1] = val_x2x1
+        t2_8[j-1][i-1] = val_x1x1
+
         node1_type = get_type_of_node(node1, N)
 
         if node1_type == 'bound_vert_left':
             f_upper[i-1] = P_left[0]
-            # f_lower[i-1] = P_left[1]
 
         if node1_type == 'bound_vert_right':
             f_upper[i-1] = P_right[0]
-            # f_lower[i-1] = P_right[1]
 
-        # print(
-        #     "node1 {0} --> node2 {1}, node1 type: {2}, pair type --> {3}".format(
-        #         node1['node_num'],
-        #         node2['node_num'],
-        #         get_type_of_node(node1, N),
-        #         pair_type
-        #     )
+        # info = """node1: {0}, node2: {1},
+        #           node1 type: {2},
+        #           node2 type: {3},
+        #           pair type: {4}""".format(
+        #     node1['node_num'],
+        #     node2['node_num'],
+        #     get_type_of_node(node1, N),
+        #     get_type_of_node(node2, N),
+        #     pair_type
         # )
 
+        # print(info)
+
     t1_1 *= factor1
-    t2_2 *= factor1 * Mu_1
+    t2_2 *= factor1 * Mu
     t1_3 *= G
     t2_4 *= G
 
-    t1_5 *= factor1 * Mu_1
+    t1_5 *= factor1 * Mu
     t2_6 *= factor1
     t1_7 *= G
     t2_8 *= G
@@ -137,7 +149,7 @@ def main():
 
     k_matrix = np.concatenate((part_upper, part_lower))
     f = np.concatenate((f_upper, f_lower))
-
+    print("start slae solving...")
     # решение слау
     sol = np.linalg.solve(k_matrix, f)
     n, = sol.shape
